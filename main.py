@@ -4,11 +4,12 @@ import music
 
 cogs = [music]
 
-for i in range(len(cogs)):
-  cogs[i].setup()
-
 # bot prefix setup
 client = commands.Bot(command_prefix='!!', intents = discord.Intents.all())
+
+for i in range(len(cogs)):
+  cogs[i].setup(client)
+
 
 
 # Run bot
