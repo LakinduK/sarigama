@@ -1,5 +1,6 @@
 import discord
 import os
+from keep_alive import keep_alive
 from discord.ext import commands
 import music
 
@@ -15,4 +16,5 @@ for i in range(len(cogs)):
 
 # Run bot
 # copy the discord client secret key, add as an environment variable, use it as per below 
+keep_alive()
 client.run(os.environ['TOKEN'])

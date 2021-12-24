@@ -50,7 +50,7 @@ class music(commands.Cog):
     await ctx.voice_client.pause()
     await ctx.send("Music Paused ⏸️")
 
-# music pause
+# music resume
   @commands.command()
   async def re(self,ctx):
     await ctx.voice_client.resume()
