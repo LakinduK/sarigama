@@ -1,4 +1,5 @@
 import discord
+import os
 from discord.ext import commands
 import music
 
@@ -13,4 +14,5 @@ for i in range(len(cogs)):
 
 
 # Run bot
-client.run()
+# copy the discord client secret key, add as an environment variable, use it as per below 
+client.run(os.environ['TOKEN'])
