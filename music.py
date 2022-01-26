@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import youtube_dl
+from requests import get
 
 
 # Music commands class init
@@ -32,7 +33,7 @@ class music(commands.Cog):
 # music play command
 
     @commands.command()
-    async def play(self, ctx, url):
+    async def url(self, ctx, url):
         ctx.voice_client.stop()
 
         FFMPEG_OPTIONS = {
@@ -52,7 +53,29 @@ class music(commands.Cog):
                 url2, **FFMPEG_OPTIONS)
             vc.play(source)
 
-# music pause
+    @commands.command()
+    async def play(self, ctx, *, url):
+        ctx.voice_client.stop()
+
+        FFMPEG_OPTIONS = {
+            'before_options':
+            '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'options': '-vn'
+        }
+        vc = ctx.voice_client
+
+        # info = ydl.extract_info(url, download=False)
+        info = search(url)
+        await ctx.send("Playing ▶️ "+info['webpage_url'])
+        url2 = info['formats'][0]['url']
+
+        # create stream to play audio
+        source = await discord.FFmpegOpusAudio.from_probe(
+            url2, **FFMPEG_OPTIONS)
+        vc.play(source)
+        
+
+    # music pause
 
     @commands.command()
     async def ps(self, ctx):
@@ -66,6 +89,21 @@ class music(commands.Cog):
     async def re(self, ctx):
         ctx.voice_client.resume()
         await ctx.send("Music resumed ⏯️")
+
+YDL_OPT = {'format': 'bestaudio', 'noplaylist': 'True'}
+
+# Search func
+def search(arg):
+    with youtube_dl.YoutubeDL(YDL_OPT) as ydl:
+        try:
+            get(arg)
+        except:
+            video = ydl.extract_info(f"ytsearch:{arg}",
+                                     download=False)['entries'][0]
+        else:
+            video = ydl.extract_info(arg, download=False)
+
+    return video
 
 
 def setup(client):
