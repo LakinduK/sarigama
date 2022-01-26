@@ -7,6 +7,9 @@ authors = ["lakinduk <<>>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 PyNaCl = "^1.4.0"
+discord = "^1.7.3"
+Flask = "^2.0.2"
+youtube_dl = "^2021.12.17"
 
 [tool.poetry.dev-dependencies]
 

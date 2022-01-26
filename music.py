@@ -23,13 +23,13 @@ class music(commands.Cog):
       await ctx.voice_client.move_to(voice_channel)
   
   @commands.command()
-  async def disconnect(self,ctx):
+  async def exit(self,ctx):
     await ctx.voice_client.disconnect()
 
 
 # music play command
   @commands.command()
-  async def p(self,ctx,url):
+  async def play(self,ctx,url):
     ctx.voice_client.stop()
 
     FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
@@ -38,7 +38,7 @@ class music(commands.Cog):
 
     with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
       info = ydl.extract_info(url, download=False)
-      url2 = info['formats'] [0]['url']
+      url2 = info['formats'][0]['url']
 
       # create stream to play audio
       source = await discord.FFmpegOpusAudio.from_probe(url2, **FFMPEG_OPTIONS)
