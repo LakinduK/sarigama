@@ -32,7 +32,8 @@ body {
      background: #AD91FF !important;
  }
 .navbar {
-    box-shadow: none !important
+    box-shadow: none !important;
+    background-color: #1D1E28;
 }
 
 .navbar-brand {
