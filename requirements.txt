@@ -4,8 +4,8 @@ chardet == >=2.0,<5.0
 multidict == >=4.5,<7.0
 typing-extensions == >=3.6.5
 yarl == >=1.0,<2.0
-python = "^3.8"
-PyNaCl = "^1.4.0"
-discord.py = "^1.7.3"
-Flask = "^2.0.2"
-youtube_dl = "^2021.12.17"
+python = ^3.8
+PyNaCl = ^1.4.0
+discord.py = ^1.7.3
+Flask = ^2.0.2
+youtube_dl = ^2021.12.17
