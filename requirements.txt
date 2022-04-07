@@ -3,7 +3,7 @@ attrs == 17.3.0
 chardet == 4.0.0
 multidict == 6.0.2
 typing-extensions == 4.0.0
-yarl == >=1.0,<2.0
+yarl == 1.7.2
 python == ^3.8
 PyNaCl == ^1.4.0
 discord.py == ^1.7.3
