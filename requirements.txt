@@ -10,3 +10,5 @@ discord.py == 1.7.3
 Flask == 2.0.2
 youtube_dl == 2021.12.17
 requests == 2.27.1
+git+https://github.com/Rapptz/discord.py
+ffmpeg
