@@ -1,7 +1,13 @@
 import discord
 from discord.ext import commands
 import youtube_dl
+import asyncio
 from requests import get
+# from asyncio importasyncio, run
+
+queues = []
+
+prefix = '!'
 
 
 # Music commands class init
@@ -9,19 +15,44 @@ class music(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-# join bot to channel
+    # join bot to channel
 
     @commands.command()
     async def join(self, ctx):
-      await fjoin(self, ctx)
+        await fjoin(self, ctx)
 
-# bot exit command
+    # bot exit command
 
     @commands.command()
     async def exit(self, ctx):
         await ctx.voice_client.disconnect()
 
-# music play command
+    # bot list clear
+
+    @commands.command()
+    async def clear(self, ctx):
+        queues.clear()
+        await ctx.reply("PlayList Cleared")
+
+    @commands.command()
+    async def help(self, ctx):
+
+        txt = """ 
+```
+!play  <Song name Or song url>
+!ps    = PAUSE
+!re    = RESUME
+!next  = Next song
+!list  = Pending song list
+!clear = Clear Playlist
+!exit  = Disconnect bot from channel
+      ```
+         """
+
+        msg = txt.replace("!", prefix)
+        await ctx.send(msg)
+
+    # music play command
 
     @commands.command()
     async def url(self, ctx, url):
@@ -44,11 +75,60 @@ class music(commands.Cog):
                 url2, **FFMPEG_OPTIONS)
             vc.play(source)
 
+    # music list
+
+    @commands.command()
+    async def list(self, ctx):
+        if len(queues) > 0:
+            msg = []
+
+            i = 0
+            while i < len(queues):
+                msg.append((f'({i+1})  {queues[i]}'))
+                i += 1
+
+            await ctx.send('\n'.join(msg))
+        else:
+            await ctx.send("List is Empty")
+
+    # music pause
+
+    @commands.command(name='ps', aliases=['pause'])
+    async def ps(self, ctx):
+        ctx.voice_client.pause()
+        await ctx.send("Music Paused ⏸")
+
+    # music resume
+
+    @commands.command(name='re', aliases=['resume'])
+    async def re(self, ctx):
+        ctx.voice_client.resume()
+        await ctx.send("Music resumed ⏯️")
+
+    # music next
+
+    @commands.command(name='next', aliases=['skip'])
+    async def next(self, ctx):
+        await ctx.reply("Skiped ⏯️")
+        ctx.voice_client.stop()
+        await play_next(ctx)
+
     @commands.command()
     async def play(self, ctx, *, url):
         await fjoin(self, ctx)
-        ctx.voice_client.stop()
-        
+        # ctx.voice_client.stop()
+        if "?list=" in url or "&list=" in url:
+            add_url(url)
+            await ctx.reply("PlayList Added)")
+            if not ctx.voice_client.is_playing():
+                await play_next(ctx)
+            return
+
+        if ctx.voice_client.is_playing():
+            info = search(url)
+            add_url(url)
+            await ctx.reply("Song Queued " + info['webpage_url'])
+            return
 
         FFMPEG_OPTIONS = {
             'before_options':
@@ -60,27 +140,48 @@ class music(commands.Cog):
         # info = ydl.extract_info(url, download=False)
         info = search(url)
         await ctx.send("Playing ▶️ " + info['webpage_url'])
+        print(len(info['formats'][0]['url']))
         url2 = info['formats'][0]['url']
 
         # create stream to play audio
         source = await discord.FFmpegOpusAudio.from_probe(
             url2, **FFMPEG_OPTIONS)
-        vc.play(source)
-
-    # music pause
-
-    @commands.command()
-    async def ps(self, ctx):
-        ctx.voice_client.pause()
-        await ctx.send("Music Paused ⏸")
+        vc.play(source, after=lambda e: asyncio.run(play_next(ctx)))
 
 
-# music resume
+async def play_next(ctx):
+    print("Enddedd____")
+    if len(queues) > 0:
+        print(len(queues))
+        url = queues[0]
 
-    @commands.command()
-    async def re(self, ctx):
-        ctx.voice_client.resume()
-        await ctx.send("Music resumed ⏯️")
+        FFMPEG_OPTIONS = {
+            'before_options':
+            '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'options': '-vn'
+        }
+
+        vc = ctx.voice_client
+
+        # info = ydl.extract_info(url, download=False)
+        info = search(url)
+        # await ctx.send("Playing ▶️ " + info['webpage_url'])
+        url2 = info['formats'][0]['url']
+        # create stream to play audio
+        source = await discord.FFmpegOpusAudio.from_probe(
+            url2, **FFMPEG_OPTIONS)
+
+        if url in queues: queues.remove(url)
+
+        vc.play(source, after=lambda e: asyncio.run(play_next(ctx)))
+    else:
+        print("Queue is Emplty")
+        # time.sleep(5)
+        await asyncio.sleep(5)
+        await ctx.send("Queue is Emplty")
+        # if not ctx.voice_client.is_playing():
+        #  return  ctx.voice_client.disconnect()
+
 
 YDL_OPT = {'format': 'bestaudio', 'noplaylist': 'True'}
 
@@ -97,6 +198,39 @@ def search(arg):
             video = ydl.extract_info(arg, download=False)
 
     return video
+
+
+def add_url(url):
+    if "?list=" in url or "&list=" in url:
+
+        res = [
+            i.split("=")[-1] for i in url.split("?", 1)[-1].split("&")
+            if i.startswith('list' + "=")
+        ][0]
+        url = 'https://www.youtube.com/playlist?list=' + res
+        ydl = youtube_dl.YoutubeDL({
+            'outtmpl': '%(id)s%(ext)s',
+            'quiet': True,
+        })
+        video = ""
+        print("list" + url)
+        with ydl:
+            result = ydl.extract_info \
+            (url,
+            download=False) #We just want to extract the info
+
+            if 'entries' in result:
+                # Can be a playlist or a list of videos
+                video = result['entries']
+
+                #loops entries to grab each video_url
+                for i, item in enumerate(video):
+                    video = result['entries'][i]
+                    print(video['title'])
+                    queues.append(video['title'])
+
+    else:
+        queues.append(url)
 
 
 async def fjoin(self, ctx):
