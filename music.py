@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import youtube_dl
-import time
 import asyncio
 from requests import get
 # from asyncio importasyncio, run
@@ -94,21 +93,21 @@ class music(commands.Cog):
 
     # music pause
 
-    @commands.command()
+    @commands.command(name='ps', aliases=['pause'])
     async def ps(self, ctx):
         ctx.voice_client.pause()
         await ctx.send("Music Paused ⏸")
 
     # music resume
 
-    @commands.command()
+    @commands.command(name='re', aliases=['resume'])
     async def re(self, ctx):
         ctx.voice_client.resume()
         await ctx.send("Music resumed ⏯️")
 
     # music next
 
-    @commands.command()
+    @commands.command(name='next', aliases=['skip'])
     async def next(self, ctx):
         await ctx.reply("Skiped ⏯️")
         ctx.voice_client.stop()
@@ -179,7 +178,7 @@ async def play_next(ctx):
         print("Queue is Emplty")
         # time.sleep(5)
         await asyncio.sleep(5)
-        ctx.send("Queue is Emplty")
+        await ctx.send("Queue is Emplty")
         # if not ctx.voice_client.is_playing():
         #  return  ctx.voice_client.disconnect()
 
