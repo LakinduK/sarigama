@@ -8,13 +8,14 @@ from requests import get
 
 queues = []
 
-prefix='.'
+prefix = '!'
+
 
 # Music commands class init
 class music(commands.Cog):
     def __init__(self, client):
         self.client = client
-    
+
     # join bot to channel
 
     @commands.command()
@@ -27,8 +28,6 @@ class music(commands.Cog):
     async def exit(self, ctx):
         await ctx.voice_client.disconnect()
 
-
-
     # bot list clear
 
     @commands.command()
@@ -36,28 +35,23 @@ class music(commands.Cog):
         queues.clear()
         await ctx.reply("PlayList Cleared")
 
-
-
     @commands.command()
     async def help(self, ctx):
 
         txt = """ 
 ```
-!play <Song name Or song url>
-!ps   PAUSE
-!re   RESUME
-!next Next song
-!list Pending song list
-!clear Clear Playlist
-!exit Disconnect bot from channel
+!play  <Song name Or song url>
+!ps    = PAUSE
+!re    = RESUME
+!next  = Next song
+!list  = Pending song list
+!clear = Clear Playlist
+!exit  = Disconnect bot from channel
       ```
          """
 
-        msg = txt.replace("!", prefix)    
+        msg = txt.replace("!", prefix)
         await ctx.send(msg)
-
-
-
 
     # music play command
 
@@ -124,19 +118,18 @@ class music(commands.Cog):
     async def play(self, ctx, *, url):
         await fjoin(self, ctx)
         # ctx.voice_client.stop()
-        if "?list=" in url or  "&list=" in url:
-          add_url(url)
-          await ctx.reply("PlayList Added)")
-          if not ctx.voice_client.is_playing():
-              await play_next(ctx)
-          return
+        if "?list=" in url or "&list=" in url:
+            add_url(url)
+            await ctx.reply("PlayList Added)")
+            if not ctx.voice_client.is_playing():
+                await play_next(ctx)
+            return
 
         if ctx.voice_client.is_playing():
+            info = search(url)
             add_url(url)
-            await ctx.reply("Song Queued)")
+            await ctx.reply("Song Queued " + info['webpage_url'])
             return
-        
-
 
         FFMPEG_OPTIONS = {
             'before_options':
@@ -184,12 +177,11 @@ async def play_next(ctx):
         vc.play(source, after=lambda e: asyncio.run(play_next(ctx)))
     else:
         print("Queue is Emplty")
-        time.sleep(5)
+        # time.sleep(5)
+        await asyncio.sleep(5)
+        ctx.send("Queue is Emplty")
         # if not ctx.voice_client.is_playing():
-          #  return  ctx.voice_client.disconnect()
-
-
-        # ctx.send("Queue is Emplty")
+        #  return  ctx.voice_client.disconnect()
 
 
 YDL_OPT = {'format': 'bestaudio', 'noplaylist': 'True'}
@@ -210,31 +202,36 @@ def search(arg):
 
 
 def add_url(url):
-  if "?list=" in url or "&list=" in url:
-          
-    res = [i.split("=")[-1] for i in url.split("?", 1)[-1].split("&") if i.startswith('list' + "=")][0]
-    url = 'https://www.youtube.com/playlist?list='+res
-    ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s%(ext)s', 'quiet':True,})
-    video = ""
-    print("list"+url)
-    with ydl:
-        result = ydl.extract_info \
-        (url,
-        download=False) #We just want to extract the info
+    if "?list=" in url or "&list=" in url:
 
-        if 'entries' in result:
-            # Can be a playlist or a list of videos
-            video = result['entries']
+        res = [
+            i.split("=")[-1] for i in url.split("?", 1)[-1].split("&")
+            if i.startswith('list' + "=")
+        ][0]
+        url = 'https://www.youtube.com/playlist?list=' + res
+        ydl = youtube_dl.YoutubeDL({
+            'outtmpl': '%(id)s%(ext)s',
+            'quiet': True,
+        })
+        video = ""
+        print("list" + url)
+        with ydl:
+            result = ydl.extract_info \
+            (url,
+            download=False) #We just want to extract the info
 
-            #loops entries to grab each video_url
-            for i, item in enumerate(video):
-                video = result['entries'][i]
-                print(video['title'])
-                queues.append(video['title'])
+            if 'entries' in result:
+                # Can be a playlist or a list of videos
+                video = result['entries']
 
-  else:
-    queues.append(url)
+                #loops entries to grab each video_url
+                for i, item in enumerate(video):
+                    video = result['entries'][i]
+                    print(video['title'])
+                    queues.append(video['title'])
 
+    else:
+        queues.append(url)
 
 
 async def fjoin(self, ctx):
